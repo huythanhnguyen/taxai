@@ -12,6 +12,7 @@ import uvicorn
 
 from app.core.config import settings
 from app.core.database import init_db
+from app.core.valkey import test_valkey, close_valkey
 from app.api.v1.api import api_router
 from app.core.security import get_current_user
 
@@ -21,9 +22,19 @@ async def lifespan(app: FastAPI):
     """Application lifespan events"""
     # Startup
     await init_db()
+    
+    # Test Valkey connection
+    valkey_connected = await test_valkey()
+    if valkey_connected:
+        print("✅ Valkey connection established")
+    else:
+        print("⚠️ Valkey connection failed - some features may not work")
+    
     yield
+    
     # Shutdown
-    pass
+    await close_valkey()
+    print("🔒 Valkey connections closed")
 
 
 # FastAPI application with Vietnamese tax filing focus

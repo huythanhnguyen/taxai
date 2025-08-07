@@ -16,20 +16,23 @@ sys.path.insert(0, str(app_dir))
 from app.core.config import settings
 
 def main():
-    """Run the FastAPI server"""
+    """Run the FastAPI server on Render"""
     
     # Ensure required directories exist
-    os.makedirs("uploads", exist_ok=True)
+    os.makedirs(settings.UPLOAD_DIR, exist_ok=True)
     os.makedirs("logs", exist_ok=True)
     
-    # Server configuration
+    # Get port from environment (Render sets this)
+    port = int(os.environ.get("PORT", 8000))
+    
+    # Server configuration for Render
     config = {
         "app": "app.main:app",
         "host": "0.0.0.0",
-        "port": 8000,
-        "reload": settings.ENVIRONMENT == "development",
-        "workers": 1 if settings.ENVIRONMENT == "development" else 4,
-        "log_level": "debug" if settings.DEBUG else "info",
+        "port": port,
+        "reload": False,  # Never reload in production
+        "workers": 1,  # Render starter plan limitation
+        "log_level": "info",
         "access_log": True,
         "log_config": {
             "version": 1,
@@ -70,11 +73,11 @@ def main():
         }
     }
     
-    print(f"Starting Vietnamese Tax Filing API Server...")
+    print(f"Starting Vietnamese Tax Filing API Server on Render...")
     print(f"Environment: {settings.ENVIRONMENT}")
-    print(f"Debug mode: {settings.DEBUG}")
-    print(f"Server will be available at: http://0.0.0.0:8000")
-    print(f"API Documentation: http://0.0.0.0:8000/api/docs")
+    print(f"Port: {port}")
+    print(f"Server will be available at: https://tax-filing-api.onrender.com")
+    print(f"API Documentation: https://tax-filing-api.onrender.com/api/docs")
     
     # Run the server
     uvicorn.run(**config)

@@ -15,11 +15,11 @@ sys.path.insert(0, str(app_dir))
 from celery import Celery
 from app.core.config import settings
 
-# Create Celery app
+# Create Celery app with Valkey backend
 celery_app = Celery(
     'vietnamese_tax_ai',
-    broker=settings.CELERY_BROKER_URL,
-    backend=settings.CELERY_RESULT_BACKEND,
+    broker=settings.CELERY_BROKER_URL,  # Valkey URL
+    backend=settings.CELERY_RESULT_BACKEND,  # Valkey URL
     include=['app.ai.tasks']  # Include AI processing tasks
 )
 

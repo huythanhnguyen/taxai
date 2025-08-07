@@ -11,12 +11,22 @@ from app.core.config import settings
 
 logger = logging.getLogger(__name__)
 
-# Create async engine
+# Convert Render's DATABASE_URL if needed
+database_url = settings.DATABASE_URL
+if database_url.startswith("postgres://"):
+    database_url = database_url.replace("postgres://", "postgresql+asyncpg://", 1)
+
+# Create async engine for Render
 engine = create_async_engine(
-    settings.DATABASE_URL,
+    database_url,
     echo=settings.DATABASE_ECHO,
-    poolclass=NullPool,
-    future=True
+    poolclass=NullPool,  # Render handles connection pooling
+    future=True,
+    connect_args={
+        "server_settings": {
+            "application_name": "tax_filing_api",
+        }
+    } if not database_url.startswith("sqlite") else {}
 )
 
 # Create async session factory
