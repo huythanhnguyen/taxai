@@ -25,15 +25,18 @@
 
 - [ ] **1.1.2** Initialize project structure
   - Create React.js TypeScript project with PWA template
-  - Set up backend API structure (Node.js/Express or Python/FastAPI)
-  - Configure database (PostgreSQL) and Redis for caching
-  - Set up Docker containers for development
+  - Set up Python backend API structure with FastAPI
+  - Configure PostgreSQL database with SQLAlchemy ORM
+  - Set up Redis for caching and Celery task queue
+  - Configure Alembic for database migrations
+  - Set up Docker containers for development (Python 3.11+, PostgreSQL, Redis)
 
 - [ ] **1.1.3** Security foundation
-  - Implement OAuth 2.0 authentication system
-  - Set up JWT token management
-  - Configure HTTPS and security headers
-  - Implement basic audit logging
+  - Implement OAuth 2.0 authentication system with python-jose
+  - Set up JWT token management using FastAPI security utilities
+  - Configure HTTPS and security headers with FastAPI middleware
+  - Implement basic audit logging using Python logging and SQLAlchemy
+  - Set up password hashing with bcrypt
 
 ### 1.2 User Management System
 **Duration**: 3 weeks
@@ -42,22 +45,25 @@
 
 #### Tasks:
 - [ ] **1.2.1** User authentication & registration
-  - Design user registration flow
-  - Implement login/logout functionality
-  - Add password reset functionality
-  - Implement multi-factor authentication (MFA)
+  - Design user registration flow with Pydantic models
+  - Implement login/logout functionality using FastAPI dependencies
+  - Add password reset functionality with email integration
+  - Implement multi-factor authentication (MFA) using TOTP
+  - Create SQLAlchemy models for user management
 
 - [ ] **1.2.2** User profile management
-  - Create user profile data models
-  - Implement profile CRUD operations
-  - Add taxpayer information management
-  - Implement data validation and sanitization
+  - Create user profile SQLAlchemy models with Vietnamese tax fields
+  - Implement profile CRUD operations using FastAPI routers
+  - Add taxpayer information management with Pydantic validation
+  - Implement data validation and sanitization for Vietnamese tax data
+  - Create async database operations with SQLAlchemy
 
 - [ ] **1.2.3** Role-based access control
-  - Define user roles (individual, business, consultant)
-  - Implement permission system
-  - Add role-based UI components
-  - Test access control scenarios
+  - Define user roles (individual, business, consultant) in SQLAlchemy models
+  - Implement permission system using FastAPI dependencies
+  - Add role-based UI components with proper API integration
+  - Test access control scenarios with pytest
+  - Create middleware for role-based route protection
 
 ### 1.3 Complete HTKK-Equivalent Tax System
 **Duration**: 6 weeks
@@ -68,24 +74,25 @@
 - [ ] **1.3.1** HTKK form analysis and replication
   - Complete analysis of HTKK v5.3.9 form structures
   - Replicate exact menu hierarchy and navigation
-  - Design database schema matching HTKK data models
-  - Create form template system with version control
+  - Design SQLAlchemy database schema matching HTKK data models
+  - Create form template system with version control using Alembic
+  - Implement Pydantic models for all HTKK form types
 
 - [ ] **1.3.2** Traditional form implementation
-  - Build exact HTKK-style form rendering engine
-  - Implement comprehensive field validation system
-  - Add conditional field display logic matching HTKK
-  - Create form auto-save functionality
-  - Implement traditional keyboard navigation
+  - Build exact HTKK-style form rendering engine with FastAPI backend
+  - Implement comprehensive field validation system using Pydantic
+  - Add conditional field display logic matching HTKK with Python business logic
+  - Create form auto-save functionality using async background tasks
+  - Implement traditional keyboard navigation with proper API endpoints
 
 - [ ] **1.3.3** Complete tax form types
-  - Personal Income Tax (PIT) forms - all variants
-  - Corporate Income Tax (CIT) forms - all variants
-  - Value Added Tax (VAT) forms - all variants
-  - Special Consumption Tax forms
-  - Import/Export tax forms
-  - Property tax forms
-  - Form submission and storage with HTKK compatibility
+  - Personal Income Tax (PIT) forms - all variants with SQLAlchemy models
+  - Corporate Income Tax (CIT) forms - all variants with Pydantic validation
+  - Value Added Tax (VAT) forms - all variants with FastAPI endpoints
+  - Special Consumption Tax forms with Python business logic
+  - Import/Export tax forms with async processing
+  - Property tax forms with database integration
+  - Form submission and storage with HTKK compatibility using Python
 
 ### 1.4 Government Integration & Compliance
 **Duration**: 3 weeks
@@ -95,15 +102,17 @@
 #### Tasks:
 - [ ] **1.4.1** Government API integration
   - Research Vietnamese tax authority APIs
-  - Implement electronic submission system
-  - Add submission status tracking
-  - Create official receipt generation
+  - Implement electronic submission system using Python HTTP clients (httpx/aiohttp)
+  - Add submission status tracking with async background tasks
+  - Create official receipt generation using Python PDF libraries
+  - Implement XML generation for government submission using Python libraries
 
 - [ ] **1.4.2** Compliance validation
-  - Implement tax law compliance checks
-  - Add deadline tracking and notifications
-  - Validate against official requirements
-  - Create compliance reports
+  - Implement tax law compliance checks using Python business logic
+  - Add deadline tracking and notifications with Celery scheduled tasks
+  - Validate against official requirements using Pydantic validators
+  - Create compliance reports using Python reporting libraries
+  - Implement Vietnamese tax calculation algorithms in Python
 
 ### 1.5 PWA Implementation
 **Duration**: 2 weeks
@@ -127,23 +136,26 @@
 
 ## Phase 2: Multimodal AI Enhancement (Months 5-8)
 
-### 2.1 Gemini-2.5-Flash-Lite Setup
+### 2.1 Python Google ADK & Gemini-2.5-Flash-Lite Setup
 **Duration**: 2 weeks
 **Priority**: High
 **Dependencies**: 1.5
 
 #### Tasks:
-- [ ] **2.1.1** Gemini-2.5-Flash-Lite configuration
-  - Install and configure Google ADK
-  - Set up Gemini-2.5-Flash-Lite model access
-  - Configure authentication for Google Cloud services
-  - Test multimodal capabilities (voice, image, PDF)
+- [ ] **2.1.1** Python Google ADK configuration
+  - Install Google ADK for Python (`pip install google-adk`)
+  - Set up Gemini-2.5-Flash-Lite model access with Python
+  - Configure Google Cloud authentication using service accounts
+  - Test multimodal capabilities (voice, image, PDF) with Python
+  - Set up async processing for AI operations using asyncio
 
-- [ ] **2.1.2** Basic multimodal agent
-  - Create TaxMultimodalAgent class
-  - Implement voice input processing
-  - Set up document/image analysis capabilities
-  - Test basic multimodal responses
+- [ ] **2.1.2** Python-based multimodal agent
+  - Create TaxMultimodalAgent class inheriting from LlmAgent
+  - Implement voice input processing with Vietnamese language support
+  - Set up document/image analysis capabilities using Gemini vision
+  - Test basic multimodal responses with FastAPI endpoints
+  - Integrate with SQLAlchemy database sessions
+  - Create Pydantic models for AI processing results
 
 ### 2.2 Voice Input Integration
 **Duration**: 3 weeks
@@ -151,26 +163,37 @@
 **Dependencies**: 2.1
 
 #### Tasks:
-- [ ] **2.2.1** Voice input infrastructure
+- [ ] **2.2.1** Python voice input infrastructure
   ```python
-  # Voice processing implementation
-  class VoiceInputProcessor:
-      def __init__(self):
+  # Python voice processing implementation with FastAPI
+  from google.adk.tools import FunctionTool
+  from sqlalchemy.ext.asyncio import AsyncSession
+  
+  class VoiceInputProcessor(FunctionTool):
+      def __init__(self, db_session: AsyncSession, user_id: str):
+          self.db_session = db_session
+          self.user_id = user_id
           self.model = "gemini-2.5-flash-lite"
           self.supported_languages = ["vi-VN", "en-US"]
+          super().__init__(
+              name="voice_input_processor",
+              description="Xử lý đầu vào giọng nói tiếng Việt"
+          )
   ```
 
-- [ ] **2.2.2** Voice-to-form mapping
-  - Implement voice activation for form fields
-  - Create voice command recognition for navigation
-  - Add voice data validation and confirmation
-  - Implement Vietnamese language processing
+- [ ] **2.2.2** Python voice-to-form mapping
+  - Implement voice activation for form fields using FastAPI WebSocket
+  - Create voice command recognition for navigation with Python
+  - Add voice data validation and confirmation using Pydantic
+  - Implement Vietnamese language processing with Gemini-2.5-Flash-Lite
+  - Create async voice processing endpoints with proper error handling
 
-- [ ] **2.2.3** Voice UI components
-  - Create voice input buttons for each form field
-  - Add voice recording indicators
-  - Implement voice feedback and confirmation
-  - Test voice input accuracy and performance
+- [ ] **2.2.3** Voice UI components with Python backend
+  - Create voice input buttons for each form field with FastAPI integration
+  - Add voice recording indicators with real-time status updates
+  - Implement voice feedback and confirmation using Python WebSocket
+  - Test voice input accuracy and performance with Vietnamese language
+  - Create comprehensive error handling for voice processing failures
 
 ### 2.3 Document Processing Integration
 **Duration**: 4 weeks
@@ -178,29 +201,52 @@
 **Dependencies**: 2.2
 
 #### Tasks:
-- [ ] **2.3.1** Direct document processing tools
+- [ ] **2.3.1** Python direct document processing tools
   ```python
+  # Python document processing with FastAPI and SQLAlchemy
+  from google.adk.tools import FunctionTool
+  from sqlalchemy.ext.asyncio import AsyncSession
+  from pydantic import BaseModel
+  from typing import Dict, Any, List
+  
+  class DocumentExtractionResult(BaseModel):
+      extracted_fields: Dict[str, Any]
+      confidence_scores: Dict[str, float]
+      document_type: str
+      processing_time: float
+  
   class DocumentFieldExtractor(FunctionTool):
       """Extract specific fields from PDF/images using Gemini vision"""
+      def __init__(self, db_session: AsyncSession, user_id: str):
+          self.db_session = db_session
+          self.user_id = user_id
       
   class FormFieldMapper(FunctionTool):
       """Map extracted data to appropriate tax form fields"""
+      def __init__(self, db_session: AsyncSession, user_id: str):
+          self.db_session = db_session
+          self.user_id = user_id
       
   class DataValidator(FunctionTool):
-      """Validate extracted data against tax requirements"""
+      """Validate extracted data against Vietnamese tax requirements"""
+      def __init__(self, db_session: AsyncSession, user_id: str):
+          self.db_session = db_session
+          self.user_id = user_id
   ```
 
-- [ ] **2.3.2** Multimodal document analysis
-  - Direct PDF processing by Gemini-2.5-Flash-Lite
-  - Image analysis for tax documents and receipts
-  - Targeted field extraction with specific prompts
-  - Vietnamese document text recognition
+- [ ] **2.3.2** Python multimodal document analysis
+  - Direct PDF processing by Gemini-2.5-Flash-Lite using Python
+  - Image analysis for tax documents and receipts with async processing
+  - Targeted field extraction with specific prompts in Vietnamese
+  - Vietnamese document text recognition with confidence scoring
+  - Implement file upload handling with FastAPI and proper validation
 
-- [ ] **2.3.3** Selective data extraction
-  - Prompt engineering for specific field extraction
-  - User-specified field selection interface
-  - Data validation and format checking
-  - Auto-mapping to correct tax form fields
+- [ ] **2.3.3** Python selective data extraction
+  - Prompt engineering for specific field extraction using Python templates
+  - User-specified field selection interface with FastAPI endpoints
+  - Data validation and format checking using Pydantic models
+  - Auto-mapping to correct tax form fields with SQLAlchemy integration
+  - Implement background processing with Celery for large documents
 
 ### 2.4 AI Enhancement UI Integration
 **Duration**: 2 weeks
@@ -355,7 +401,7 @@
 ### 4.5 Team Structure
 - **Project Manager**: 1 FTE
 - **Frontend Developers**: 2 FTE (React.js, TypeScript)
-- **Backend Developers**: 2 FTE (Node.js/Python, API development)
+- **Backend Developers**: 2 FTE (Python/FastAPI, API development)
 - **AI/ML Engineers**: 2 FTE (Google ADK, LLM integration)
 - **DevOps Engineer**: 1 FTE
 - **UI/UX Designer**: 1 FTE
@@ -365,13 +411,19 @@
 
 ### 4.6 Technology Stack
 - **Frontend**: React.js, TypeScript, HTKK-style UI components
-- **Backend**: Node.js/Express or Python/FastAPI
-- **Database**: PostgreSQL, Redis
-- **AI Framework**: Google ADK, Gemini-2.5-Flash-Lite
-- **Multimodal**: Voice processing, PDF/image analysis
+- **Backend**: Python 3.11+ with FastAPI framework
+- **Database**: PostgreSQL with SQLAlchemy ORM, Redis for caching
+- **AI Framework**: Google ADK for Python, Gemini-2.5-Flash-Lite
+- **Multimodal**: Voice processing, PDF/image analysis with Python
+- **Task Queue**: Celery with Redis broker for async AI processing
+- **Data Validation**: Pydantic models for all API endpoints
+- **Database Migrations**: Alembic for schema management
+- **Authentication**: python-jose for JWT, bcrypt for password hashing
+- **File Processing**: Python libraries for PDF/image processing
 - **Cloud**: Google Cloud Platform (for Gemini integration)
 - **DevOps**: Docker, Kubernetes, CI/CD pipelines
 - **Monitoring**: Prometheus, Grafana, ELK stack
+- **Testing**: pytest for backend testing, coverage for test metrics
 
 ### 4.7 Budget Considerations
 - **Development Team**: $500K - $700K (12 months)
@@ -430,6 +482,168 @@
 
 ---
 
-**Document Status**: Implementation Ready
+## Python Development Environment Setup
+
+### Python Backend Development Requirements
+
+#### Required Python Packages
+```bash
+# Core FastAPI and async support
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+python-multipart==0.0.6
+
+# Database and ORM
+sqlalchemy[asyncio]==2.0.23
+asyncpg==0.29.0  # PostgreSQL async driver
+alembic==1.12.1
+redis==5.0.1
+
+# Authentication and security
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+python-multipart==0.0.6
+
+# Google ADK and AI
+google-adk==1.0.0  # When available
+google-cloud-aiplatform==1.38.1
+google-auth==2.23.4
+
+# Data validation and serialization
+pydantic==2.5.0
+pydantic-settings==2.1.0
+
+# Background tasks
+celery[redis]==5.3.4
+flower==2.0.1  # Celery monitoring
+
+# File processing
+PyPDF2==3.0.1
+Pillow==10.1.0
+python-magic==0.4.27
+
+# HTTP clients for government API integration
+httpx==0.25.2
+aiohttp==3.9.1
+
+# Testing
+pytest==7.4.3
+pytest-asyncio==0.21.1
+pytest-cov==4.1.0
+httpx==0.25.2  # For testing FastAPI
+
+# Development tools
+black==23.11.0
+isort==5.12.0
+flake8==6.1.0
+mypy==1.7.1
+```
+
+#### Docker Configuration for Python Backend
+```dockerfile
+# Dockerfile for Python backend
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    gcc \
+    libpq-dev \
+    libmagic1 \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy requirements and install Python dependencies
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy application code
+COPY . .
+
+# Expose port
+EXPOSE 8000
+
+# Run the application
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+```
+
+#### Development Environment Setup Tasks
+- [ ] **Python Environment Setup**
+  - Set up Python 3.11+ virtual environment
+  - Install all required packages from requirements.txt
+  - Configure pre-commit hooks for code quality
+  - Set up IDE/editor with Python type checking
+
+- [ ] **Database Setup**
+  - Configure PostgreSQL database for development
+  - Set up Redis for caching and Celery
+  - Create initial Alembic migration scripts
+  - Set up database connection pooling
+
+- [ ] **Google ADK Configuration**
+  - Set up Google Cloud project for ADK access
+  - Configure service account authentication
+  - Test Gemini-2.5-Flash-Lite model access
+  - Set up proper API quotas and billing
+
+- [ ] **Development Tools**
+  - Configure pytest for async testing
+  - Set up code coverage reporting
+  - Configure linting and formatting tools
+  - Set up API documentation with FastAPI
+
+#### Project Structure
+```
+backend/
+├── app/
+│   ├── __init__.py
+│   ├── main.py                 # FastAPI application
+│   ├── config.py              # Configuration settings
+│   ├── database.py            # Database connection
+│   ├── models/                # SQLAlchemy models
+│   │   ├── __init__.py
+│   │   ├── user.py
+│   │   ├── taxpayer.py
+│   │   └── tax_declaration.py
+│   ├── schemas/               # Pydantic models
+│   │   ├── __init__.py
+│   │   ├── user.py
+│   │   ├── taxpayer.py
+│   │   └── tax_declaration.py
+│   ├── api/                   # API routes
+│   │   ├── __init__.py
+│   │   ├── auth.py
+│   │   ├── taxpayer.py
+│   │   ├── tax_forms.py
+│   │   └── ai_processing.py
+│   ├── services/              # Business logic
+│   │   ├── __init__.py
+│   │   ├── auth_service.py
+│   │   ├── tax_service.py
+│   │   └── ai_service.py
+│   ├── ai/                    # Google ADK integration
+│   │   ├── __init__.py
+│   │   ├── agents.py
+│   │   ├── tools.py
+│   │   └── prompts.py
+│   ├── utils/                 # Utility functions
+│   │   ├── __init__.py
+│   │   ├── security.py
+│   │   └── validators.py
+│   └── tests/                 # Test files
+│       ├── __init__.py
+│       ├── test_auth.py
+│       ├── test_tax_forms.py
+│       └── test_ai_processing.py
+├── alembic/                   # Database migrations
+├── requirements.txt
+├── Dockerfile
+├── docker-compose.yml
+└── README.md
+```
+
+---
+
+**Document Status**: Implementation Ready - Python Backend Focused
 **Last Updated**: January 2025
 **Next Review**: Weekly during development phases 

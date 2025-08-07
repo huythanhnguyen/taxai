@@ -158,38 +158,75 @@ class TaxAssistantAgent(LlmAgent):
 - **Chat Interface**: Custom chat component with ADK integration
 
 #### 4.1.2 Backend Stack
-- **Runtime**: Node.js or Python (FastAPI)
-- **AI Framework**: Google ADK (Agent Development Kit)
+- **Runtime**: Python 3.11+ with FastAPI
+- **AI Framework**: Google ADK (Agent Development Kit) for Python
 - **Database**: PostgreSQL with Redis for caching
-- **Authentication**: OAuth 2.0 with JWT tokens
-- **File Storage**: Google Cloud Storage or AWS S3
+- **Authentication**: OAuth 2.0 with JWT tokens (using python-jose)
+- **File Storage**: Google Cloud Storage (for seamless ADK integration)
+- **ORM**: SQLAlchemy with Alembic for migrations
+- **Task Queue**: Celery with Redis broker for async AI processing
+- **API Documentation**: Automatic OpenAPI/Swagger with FastAPI
 
-#### 4.1.3 Multimodal AI Integration
+#### 4.1.3 Multimodal AI Integration with Python
 ```python
-# Gemini-2.5-Flash-Lite Multimodal Configuration
+# Python Backend Architecture for Google ADK Integration
+from fastapi import FastAPI, BackgroundTasks
 from google.adk import Agent, LlmAgent
 from google.adk.tools import FunctionTool
+from sqlalchemy.ext.asyncio import AsyncSession
+from celery import Celery
+import asyncio
+
+# FastAPI application with ADK integration
+app = FastAPI(title="Vietnamese Tax Filing API")
+celery_app = Celery('tax_filing', broker='redis://localhost:6379')
 
 class MultimodalTaxAgent(LlmAgent):
-    def __init__(self):
+    """Python-based multimodal tax agent with FastAPI integration"""
+    
+    def __init__(self, db_session: AsyncSession):
+        self.db_session = db_session
         super().__init__(
             model="gemini-2.5-flash-lite",
-            system_prompt="""
-            You are a Vietnamese tax assistant with multimodal capabilities:
-            1. Process voice input for form completion
-            2. Extract specific fields from PDF/image documents
-            3. Map extracted data to tax form fields
-            4. Validate and format data appropriately
-            
-            IMPORTANT: Only extract fields explicitly requested.
-            """,
+            system_prompt=self._get_vietnamese_tax_prompt(),
             tools=[
-                VoiceToFormTool(),
-                DocumentFieldExtractor(),
-                FormFieldMapper(),
-                DataValidator()
+                VoiceToFormTool(db_session),
+                DocumentFieldExtractor(db_session),
+                FormFieldMapper(db_session),
+                DataValidator(db_session),
+                TaxCalculationTool(db_session)
             ]
         )
+    
+    def _get_vietnamese_tax_prompt(self):
+        return """
+        Bạn là trợ lý thuế Việt Nam với khả năng đa phương thức:
+        1. Xử lý đầu vào giọng nói để điền form
+        2. Trích xuất các trường cụ thể từ tài liệu PDF/hình ảnh
+        3. Ánh xạ dữ liệu đã trích xuất vào các trường form thuế
+        4. Xác thực và định dạng dữ liệu phù hợp
+        
+        QUAN TRỌNG: Chỉ trích xuất các trường được yêu cầu rõ ràng.
+        """
+
+# Async endpoint for AI processing
+@app.post("/api/ai/process-multimodal")
+async def process_multimodal_input(
+    input_data: dict,
+    background_tasks: BackgroundTasks,
+    db: AsyncSession = Depends(get_db_session)
+):
+    """Process multimodal input asynchronously"""
+    agent = MultimodalTaxAgent(db)
+    
+    # Process in background for better performance
+    background_tasks.add_task(
+        process_ai_request,
+        agent,
+        input_data
+    )
+    
+    return {"status": "processing", "request_id": generate_request_id()}
 ```
 
 ### 4.2 Integration Requirements
@@ -226,48 +263,149 @@ class MultimodalTaxAgent(LlmAgent):
 
 ### 5.1 Simplified Agent Architecture
 
-#### 5.1.1 Single Multimodal Agent
+#### 5.1.1 Python-Based Single Multimodal Agent
 ```python
-# Unified multimodal agent for tax processing
+# Unified multimodal agent for tax processing with Python backend
+from typing import Optional, Dict, Any
+from pydantic import BaseModel
+from sqlalchemy.ext.asyncio import AsyncSession
+from google.adk import LlmAgent
+from google.adk.tools import FunctionTool
+
+class TaxFormData(BaseModel):
+    """Pydantic model for tax form data validation"""
+    form_type: str
+    taxpayer_id: str
+    fields: Dict[str, Any]
+    extracted_confidence: Optional[float] = None
+
 class TaxMultimodalAgent(LlmAgent):
-    """Single agent handling all multimodal tax operations"""
+    """Single agent handling all multimodal tax operations with Python backend"""
     
-    def __init__(self):
+    def __init__(self, db_session: AsyncSession, user_id: str):
+        self.db_session = db_session
+        self.user_id = user_id
         super().__init__(
             model="gemini-2.5-flash-lite",
-            system_prompt=self._get_multimodal_prompt(),
+            system_prompt=self._get_vietnamese_multimodal_prompt(),
             tools=[
-                VoiceInputProcessor(),
-                DocumentFieldExtractor(),
-                FormFieldMapper(),
-                DataValidator()
+                VoiceInputProcessor(db_session, user_id),
+                DocumentFieldExtractor(db_session, user_id),
+                FormFieldMapper(db_session, user_id),
+                DataValidator(db_session, user_id),
+                HTKKCompatibilityChecker(db_session)
             ]
         )
     
-    def _get_multimodal_prompt(self):
+    def _get_vietnamese_multimodal_prompt(self):
         return """
-        You are a Vietnamese tax assistant with multimodal processing:
-        - Process voice commands for form navigation and data entry
-        - Extract ONLY specified fields from documents/images
-        - Map extracted data to correct tax form fields
-        - Validate data format and completeness
+        Bạn là trợ lý thuế Việt Nam với khả năng xử lý đa phương thức:
+        - Xử lý lệnh giọng nói để điều hướng form và nhập dữ liệu
+        - Trích xuất CHỈ các trường được chỉ định từ tài liệu/hình ảnh
+        - Ánh xạ dữ liệu đã trích xuất vào các trường form thuế chính xác
+        - Xác thực định dạng và tính đầy đủ của dữ liệu
+        - Đảm bảo tương thích với hệ thống HTKK v5.3.9
+        
+        Luôn ưu tiên giao diện menu truyền thống và chỉ sử dụng AI khi được yêu cầu.
         """
+    
+    async def process_voice_input(self, audio_data: bytes, target_field: str) -> TaxFormData:
+        """Process voice input for specific form field"""
+        # Implementation will be handled by VoiceInputProcessor tool
+        pass
+    
+    async def process_document(self, document_data: bytes, field_specifications: list) -> TaxFormData:
+        """Process document with specific field extraction requirements"""
+        # Implementation will be handled by DocumentFieldExtractor tool
+        pass
 ```
 
-#### 5.1.2 Multimodal Tool Integration
+#### 5.1.2 Python-Based Multimodal Tool Integration
 ```python
-# Tools for multimodal input processing
+# Tools for multimodal input processing with Python backend
+from google.adk.tools import FunctionTool
+from sqlalchemy.ext.asyncio import AsyncSession
+from typing import Dict, Any, List
+import asyncio
+from pydantic import BaseModel
+
+class VoiceProcessingResult(BaseModel):
+    """Result model for voice processing"""
+    transcribed_text: str
+    confidence: float
+    field_mapping: Dict[str, Any]
+    language_detected: str
+
+class DocumentExtractionResult(BaseModel):
+    """Result model for document extraction"""
+    extracted_fields: Dict[str, Any]
+    confidence_scores: Dict[str, float]
+    document_type: str
+    processing_time: float
+
 class VoiceInputProcessor(FunctionTool):
-    """Process voice input directly to form fields"""
+    """Process voice input directly to form fields with Vietnamese support"""
     
+    def __init__(self, db_session: AsyncSession, user_id: str):
+        self.db_session = db_session
+        self.user_id = user_id
+        super().__init__(
+            name="voice_input_processor",
+            description="Xử lý đầu vào giọng nói tiếng Việt và ánh xạ vào các trường form thuế"
+        )
+    
+    async def execute(self, audio_data: bytes, target_field: str) -> VoiceProcessingResult:
+        """Execute voice processing with Vietnamese language support"""
+        # Implementation for Vietnamese voice processing
+        pass
+
 class DocumentFieldExtractor(FunctionTool):
-    """Extract specific fields from PDF/images using Gemini vision"""
+    """Extract specific fields from PDF/images using Gemini vision with Vietnamese text support"""
     
+    def __init__(self, db_session: AsyncSession, user_id: str):
+        self.db_session = db_session
+        self.user_id = user_id
+        super().__init__(
+            name="document_field_extractor",
+            description="Trích xuất các trường cụ thể từ tài liệu PDF/hình ảnh bằng Gemini vision"
+        )
+    
+    async def execute(self, document_data: bytes, field_specs: List[str]) -> DocumentExtractionResult:
+        """Execute document field extraction with Vietnamese document support"""
+        # Implementation for Vietnamese document processing
+        pass
+
 class FormFieldMapper(FunctionTool):
-    """Map extracted data to appropriate tax form fields"""
+    """Map extracted data to appropriate tax form fields with HTKK compatibility"""
     
+    def __init__(self, db_session: AsyncSession, user_id: str):
+        self.db_session = db_session
+        self.user_id = user_id
+        super().__init__(
+            name="form_field_mapper",
+            description="Ánh xạ dữ liệu đã trích xuất vào các trường form thuế phù hợp"
+        )
+    
+    async def execute(self, extracted_data: Dict[str, Any], form_type: str) -> Dict[str, Any]:
+        """Map extracted data to HTKK-compatible form fields"""
+        # Implementation for HTKK form field mapping
+        pass
+
 class DataValidator(FunctionTool):
-    """Validate extracted data against tax requirements"""
+    """Validate extracted data against Vietnamese tax requirements"""
+    
+    def __init__(self, db_session: AsyncSession, user_id: str):
+        self.db_session = db_session
+        self.user_id = user_id
+        super().__init__(
+            name="data_validator",
+            description="Xác thực dữ liệu đã trích xuất theo yêu cầu thuế Việt Nam"
+        )
+    
+    async def execute(self, form_data: Dict[str, Any], form_type: str) -> Dict[str, Any]:
+        """Validate data against Vietnamese tax regulations"""
+        # Implementation for Vietnamese tax validation
+        pass
 ```
 
 ### 5.2 Multimodal Interaction Flows
@@ -436,6 +574,287 @@ class DataValidator(FunctionTool):
 
 ---
 
-**Document Status**: Draft v1.0
+## 12. Python Backend Architecture Details
+
+### 12.1 FastAPI Application Structure
+```python
+# Main application structure for Vietnamese Tax Filing PWA
+from fastapi import FastAPI, Depends, BackgroundTasks
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.security import HTTPBearer
+from sqlalchemy.ext.asyncio import AsyncSession
+from google.adk import LlmAgent
+import asyncio
+
+# FastAPI application with Vietnamese tax filing focus
+app = FastAPI(
+    title="Vietnamese Tax Filing API",
+    description="API cho hệ thống kê khai thuế Việt Nam với AI hỗ trợ",
+    version="2.0.0",
+    docs_url="/api/docs",
+    redoc_url="/api/redoc"
+)
+
+# Middleware configuration
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000"],  # React app
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Security
+security = HTTPBearer()
+
+# Database dependency
+async def get_db_session() -> AsyncSession:
+    async with async_session() as session:
+        yield session
+
+# AI Agent dependency
+async def get_tax_agent(
+    db: AsyncSession = Depends(get_db_session),
+    current_user: dict = Depends(get_current_user)
+) -> TaxMultimodalAgent:
+    return TaxMultimodalAgent(db, current_user["user_id"])
+```
+
+### 12.2 Database Models with SQLAlchemy
+```python
+# Vietnamese tax-specific database models
+from sqlalchemy import Column, Integer, String, DateTime, JSON, Text, Boolean
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.dialects.postgresql import UUID
+import uuid
+
+Base = declarative_base()
+
+class TaxpayerProfile(Base):
+    __tablename__ = "taxpayer_profiles"
+    
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id = Column(UUID(as_uuid=True), nullable=False)
+    taxpayer_id = Column(String(20), unique=True, nullable=False)  # Mã số thuế
+    full_name = Column(String(255), nullable=False)
+    address = Column(Text)
+    phone = Column(String(20))
+    email = Column(String(255))
+    tax_office_code = Column(String(10))  # Mã cơ quan thuế
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+class TaxDeclaration(Base):
+    __tablename__ = "tax_declarations"
+    
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    taxpayer_id = Column(UUID(as_uuid=True), nullable=False)
+    form_type = Column(String(50), nullable=False)  # PIT, CIT, VAT, etc.
+    tax_period = Column(String(20), nullable=False)  # Kỳ tính thuế
+    form_data = Column(JSON, nullable=False)  # Dữ liệu form
+    status = Column(String(20), default="draft")  # draft, submitted, approved
+    submission_date = Column(DateTime)
+    ai_processed = Column(Boolean, default=False)
+    ai_confidence_score = Column(Integer)  # 0-100
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+class AIProcessingLog(Base):
+    __tablename__ = "ai_processing_logs"
+    
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id = Column(UUID(as_uuid=True), nullable=False)
+    processing_type = Column(String(50), nullable=False)  # voice, document, validation
+    input_data_hash = Column(String(64))  # SHA256 hash of input
+    output_data = Column(JSON)
+    confidence_score = Column(Integer)
+    processing_time_ms = Column(Integer)
+    model_version = Column(String(50), default="gemini-2.5-flash-lite")
+    created_at = Column(DateTime, default=datetime.utcnow)
+```
+
+### 12.3 Pydantic Models for API Validation
+```python
+# Pydantic models for Vietnamese tax data validation
+from pydantic import BaseModel, Field, validator
+from typing import Optional, Dict, Any, List
+from datetime import datetime
+from enum import Enum
+
+class TaxFormType(str, Enum):
+    PIT = "PIT"  # Thuế thu nhập cá nhân
+    CIT = "CIT"  # Thuế thu nhập doanh nghiệp
+    VAT = "VAT"  # Thuế giá trị gia tăng
+    SCT = "SCT"  # Thuế tiêu thụ đặc biệt
+    IMPORT_EXPORT = "IMPORT_EXPORT"  # Thuế xuất nhập khẩu
+    PROPERTY = "PROPERTY"  # Thuế tài sản
+
+class TaxpayerProfileCreate(BaseModel):
+    taxpayer_id: str = Field(..., regex=r"^\d{10,13}$", description="Mã số thuế")
+    full_name: str = Field(..., min_length=1, max_length=255)
+    address: Optional[str] = None
+    phone: Optional[str] = Field(None, regex=r"^[0-9+\-\s()]+$")
+    email: Optional[str] = Field(None, regex=r"^[^@]+@[^@]+\.[^@]+$")
+    tax_office_code: Optional[str] = Field(None, regex=r"^\d{3}$")
+
+class VoiceInputRequest(BaseModel):
+    audio_data: str = Field(..., description="Base64 encoded audio data")
+    target_field: str = Field(..., description="Target form field name")
+    form_type: TaxFormType
+    language: str = Field(default="vi-VN", regex=r"^(vi-VN|en-US)$")
+
+class DocumentProcessingRequest(BaseModel):
+    document_data: str = Field(..., description="Base64 encoded document")
+    document_type: str = Field(..., regex=r"^(pdf|jpg|jpeg|png)$")
+    field_specifications: List[str] = Field(..., min_items=1)
+    form_type: TaxFormType
+
+class AIProcessingResponse(BaseModel):
+    request_id: str
+    status: str = Field(..., regex=r"^(processing|completed|failed)$")
+    extracted_data: Optional[Dict[str, Any]] = None
+    confidence_scores: Optional[Dict[str, float]] = None
+    processing_time_ms: Optional[int] = None
+    error_message: Optional[str] = None
+```
+
+### 12.4 Google ADK Integration Service
+```python
+# Service layer for Google ADK integration
+from google.adk import LlmAgent
+from google.adk.tools import FunctionTool
+from sqlalchemy.ext.asyncio import AsyncSession
+import asyncio
+from typing import Dict, Any
+
+class TaxAIService:
+    """Service class for AI operations with Vietnamese tax focus"""
+    
+    def __init__(self, db_session: AsyncSession, user_id: str):
+        self.db_session = db_session
+        self.user_id = user_id
+        self.agent = TaxMultimodalAgent(db_session, user_id)
+    
+    async def process_voice_input(
+        self, 
+        audio_data: bytes, 
+        target_field: str, 
+        form_type: str
+    ) -> Dict[str, Any]:
+        """Process Vietnamese voice input for tax forms"""
+        try:
+            # Use Google ADK for voice processing
+            result = await self.agent.process_voice_input(
+                audio_data, 
+                target_field
+            )
+            
+            # Log the processing
+            await self._log_ai_processing(
+                "voice", 
+                {"target_field": target_field, "form_type": form_type},
+                result
+            )
+            
+            return result
+        except Exception as e:
+            await self._log_ai_error("voice", str(e))
+            raise
+    
+    async def process_document(
+        self, 
+        document_data: bytes, 
+        field_specs: List[str],
+        form_type: str
+    ) -> Dict[str, Any]:
+        """Process Vietnamese tax documents"""
+        try:
+            # Use Google ADK for document processing
+            result = await self.agent.process_document(
+                document_data, 
+                field_specs
+            )
+            
+            # Log the processing
+            await self._log_ai_processing(
+                "document", 
+                {"field_specs": field_specs, "form_type": form_type},
+                result
+            )
+            
+            return result
+        except Exception as e:
+            await self._log_ai_error("document", str(e))
+            raise
+    
+    async def _log_ai_processing(
+        self, 
+        processing_type: str, 
+        input_data: Dict[str, Any], 
+        output_data: Dict[str, Any]
+    ):
+        """Log AI processing for audit and improvement"""
+        log_entry = AIProcessingLog(
+            user_id=self.user_id,
+            processing_type=processing_type,
+            input_data_hash=self._hash_input(input_data),
+            output_data=output_data,
+            confidence_score=output_data.get("confidence", 0),
+            processing_time_ms=output_data.get("processing_time", 0)
+        )
+        self.db_session.add(log_entry)
+        await self.db_session.commit()
+```
+
+### 12.5 Async Task Processing with Celery
+```python
+# Celery configuration for background AI processing
+from celery import Celery
+from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
+import asyncio
+
+# Celery app configuration
+celery_app = Celery(
+    'vietnamese_tax_ai',
+    broker='redis://localhost:6379/0',
+    backend='redis://localhost:6379/0'
+)
+
+celery_app.conf.update(
+    task_serializer='json',
+    accept_content=['json'],
+    result_serializer='json',
+    timezone='Asia/Ho_Chi_Minh',
+    enable_utc=True,
+)
+
+@celery_app.task(bind=True)
+def process_large_document(self, user_id: str, document_data: str, field_specs: list):
+    """Background task for processing large Vietnamese tax documents"""
+    try:
+        # Create async session for background processing
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        
+        async def _process():
+            async with async_session() as db:
+                service = TaxAIService(db, user_id)
+                result = await service.process_document(
+                    document_data.encode(), 
+                    field_specs,
+                    "document_processing"
+                )
+                return result
+        
+        result = loop.run_until_complete(_process())
+        return {"status": "completed", "result": result}
+        
+    except Exception as exc:
+        self.retry(exc=exc, countdown=60, max_retries=3)
+```
+
+---
+
+**Document Status**: Draft v2.0 - Python Backend Focused
 **Next Review**: [Date]
 **Approval Required**: Product Manager, Technical Lead, Compliance Officer 

@@ -1,0 +1,28 @@
+[Unit]
+Description=Vietnamese Tax Filing API
+After=network.target postgresql.service redis.service
+Wants=postgresql.service redis.service
+
+[Service]
+Type=exec
+User=taxapp
+Group=taxapp
+WorkingDirectory=/home/taxapp/tax-filing-app
+Environment=PATH=/home/taxapp/tax-filing-app/venv/bin
+ExecStart=/home/taxapp/tax-filing-app/venv/bin/python run_server.py
+ExecReload=/bin/kill -HUP $MAINPID
+Restart=always
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=tax-filing-api
+
+# Security settings
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/home/taxapp/tax-filing-app/uploads /home/taxapp/tax-filing-app/logs
+
+[Install]
+WantedBy=multi-user.target
